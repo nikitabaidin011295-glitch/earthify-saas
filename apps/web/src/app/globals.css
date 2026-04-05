@@ -2,9 +2,32 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f8f8;
+  --bg-card: #ffffff;
+  --bg-hover: #f3f3f3;
+  --border: #e5e5e5;
+  --border-hover: #534AB7;
+  --text-primary: #111111;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --accent-purple: #534AB7;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --accent-amber: #f59e0b;
+  --gradient: linear-gradient(135deg, #534AB7, #7c3aed);
+  --gradient-text: linear-gradient(90deg, #534AB7, #7c3aed);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+
 body {
-  background: #ffffff;
-  color: #111111;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
