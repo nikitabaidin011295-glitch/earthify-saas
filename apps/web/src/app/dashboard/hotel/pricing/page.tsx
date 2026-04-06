@@ -230,7 +230,7 @@ export default function HotelPricingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
             {DAYS_UA.map(d => <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#aaa', padding: '4px 0' }}>{d}</div>)}
             {calendarDays.map(d => (
-              <div key={d.key} style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: 10, padding: '10px 8px', textAlign: 'center', background: d.isWeekend ? '#faf9ff' : '#fff' }}>
+              <div key={d.key} style={{ border: '1px solid #ebebeb', borderRadius: 10, padding: '10px 8px', textAlign: 'center', background: d.isWeekend ? '#faf9ff' : '#fff' '#faf9ff' : '#fff' }}>
                 <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{d.date.getDate()}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#534AB7' }}>₴{d.price.toLocaleString()}</div>
                 <div style={{ fontSize: 9, color: '#bbb', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.tariff}</div>
