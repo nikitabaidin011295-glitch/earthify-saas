@@ -1,123 +1,129 @@
 'use client'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 
-interface User {
-  id: string; name: string; email: string; role: string
-  tenant: { id: string; name: string; plan: string; modulesEnabled: string[]; subscription?: any }
+interface Stats {
+  bookingsToday: number
+  revenue: number
+  guests: number
+  occupancy: number
 }
 
-const MODULE_INFO: Record<string, { label: string; icon: string; desc: string; href: string; color: string }> = {
-  core:       { label: 'Core',      icon: '⚙️',  desc: 'Базові налаштування',     href: '/dashboard/settings', color: '#6b7280' },
-  hotel:      { label: 'Готель',    icon: '🏨',  desc: 'PMS, номери, check-in',  href: '/dashboard/hotel',    color: '#7c3aed' },
-  spa:        { label: 'СПА',       icon: '💆',  desc: 'Записи, майстри',         href: '/dashboard/spa',      color: '#06b6d4' },
-  salon:      { label: 'Салон',     icon: '💇',  desc: 'Послуги краси',           href: '/dashboard/salon',    color: '#ec4899' },
-  pool:       { label: 'Басейн',    icon: '🏊',  desc: 'Абонементи, сесії',       href: '/dashboard/pool',     color: '#10b981' },
-  restaurant: { label: 'Ресторан',  icon: '🍽️', desc: 'Меню, столики',           href: '/dashboard/restaurant', color: '#f59e0b' },
-  cafe:       { label: 'Кафе',      icon: '☕',  desc: 'Бар, напої',             href: '/dashboard/restaurant', color: '#92400e' },
-}
-
-const STATS = [
-  { label: 'Гостей сьогодні', value: '0', icon: '👥', color: '#7c3aed' },
-  { label: 'Бронювань',       value: '0', icon: '📅', color: '#06b6d4' },
-  { label: 'Виторг',          value: '₴0', icon: '💰', color: '#10b981' },
-  { label: 'Повідомлень',     value: '0', icon: '💬', color: '#f59e0b' },
+const quickActions = [
+  { label: 'Нове бронювання', icon: '📅', href: '/dashboard/hotel/new-booking', color: '#534AB7' },
+  { label: 'Новий запис СПА', icon: '💆', href: '/dashboard/spa/new-appointment', color: '#0F6E56' },
+  { label: 'Запис в салон', icon: '✂️', href: '/dashboard/salon/new-appointment', color: '#7c3aed' },
+  { label: 'Резерв столика', icon: '🍽️', href: '/dashboard/restaurant/new-booking', color: '#D85A30' },
 ]
 
+const recentBookings = [
+  { id: 'B001', guest: 'Олексій Коваль', service: 'Номер Делюкс', date: '05.04.2026', status: 'confirmed', amount: 2400 },
+  { id: 'B002', guest: 'Марія Петренко', service: 'СПА — Масаж', date: '05.04.2026', status: 'pending', amount: 850 },
+  { id: 'B003', guest: 'Іван Сидоренко', service: 'Столик на 4', date: '05.04.2026', status: 'confirmed', amount: 0 },
+  { id: 'B004', guest: 'Анна Мельник', service: 'Стрижка + фарба', date: '05.04.2026', status: 'completed', amount: 1200 },
+  { id: 'B005', guest: 'Дмитро Бондар', service: 'Басейн — абонемент', date: '04.04.2026', status: 'confirmed', amount: 1500 },
+]
+
+const statusColors: Record<string, { bg: string; color: string; label: string }> = {
+  confirmed: { bg: '#E1F5EE', color: '#0F6E56', label: 'Підтверджено' },
+  pending:   { bg: '#FAEEDA', color: '#854F0B', label: 'Очікує' },
+  completed: { bg: '#EEEDFE', color: '#3C3489', label: 'Завершено' },
+  cancelled: { bg: '#FCEBEB', color: '#A32D2D', label: 'Скасовано' },
+}
+
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [stats] = useState<Stats>({ bookingsToday: 12, revenue: 18400, guests: 47, occupancy: 78 })
+  const [greeting, setGreeting] = useState('Доброго дня')
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) { window.location.href = '/login'; return }
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
-      .then(data => { if (data.id) setUser(data); else window.location.href = '/login' })
-      .catch(() => window.location.href = '/login')
-      .finally(() => setLoading(false))
+    const h = new Date().getHours()
+    if (h < 12) setGreeting('Доброго ранку')
+    else if (h < 18) setGreeting('Доброго дня')
+    else setGreeting('Доброго вечора')
   }, [])
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-      <div style={{ width: 40, height: 40, border: '3px solid var(--accent-purple)', borderTopColor: 'transparent', borderRadius: '50%' }} className="animate-spin" />
-    </div>
-  )
-
-  if (!user) return null
-
-  const activeModules = user.tenant.modulesEnabled.filter(m => m !== 'core')
-
   return (
-    <div className="animate-fadeIn">
+    <div style={{ padding: '2rem 2.5rem', maxWidth: 1200 }}>
+
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 6 }}>Привіт, {user.name}! 👋</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>{user.tenant.name} · {user.role}</p>
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: 26, fontWeight: 600, color: '#111', marginBottom: 4 }}>{greeting}! 👋</h1>
+        <p style={{ color: '#888', fontSize: 14 }}>Ось що відбувається сьогодні у вашому бізнесі</p>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
-        {STATS.map(s => (
-          <div key={s.label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 16, right: 16, fontSize: 28, opacity: 0.2 }}>{s.icon}</div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{s.label}</p>
-            <p style={{ fontSize: 32, fontWeight: 700, color: s.color }}>{s.value}</p>
+      {/* Stats grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: '2rem' }}>
+        {[
+          { label: 'Бронювань сьогодні', value: stats.bookingsToday, icon: '📅', color: '#534AB7', bg: '#EEEDFE' },
+          { label: 'Виторг сьогодні', value: `₴${stats.revenue.toLocaleString()}`, icon: '💰', color: '#0F6E56', bg: '#E1F5EE' },
+          { label: 'Активних гостей', value: stats.guests, icon: '👥', color: '#D85A30', bg: '#FAECE7' },
+          { label: 'Завантаженість', value: `${stats.occupancy}%`, icon: '📊', color: '#7c3aed', bg: '#F5F0FF' },
+        ].map((s, i) => (
+          <div key={i} style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: 14, padding: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 12, color: '#888', fontWeight: 500 }}>{s.label}</span>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{s.icon}</div>
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Modules */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600 }}>Активні модулі</h2>
-          <Link href="/dashboard/settings" style={{ color: 'var(--accent-purple)', fontSize: 13 }}>Налаштувати →</Link>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
-          {activeModules.map(mod => {
-            const info = MODULE_INFO[mod]
-            if (!info) return null
-            return (
-              <Link key={mod} href={info.href} style={{
-                background: 'var(--bg-card)', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-lg)', padding: 20, display: 'block',
-                transition: 'all 0.2s', textDecoration: 'none',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = info.color; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.transform = 'none' }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>{info.icon}</div>
-                <p style={{ fontWeight: 600, marginBottom: 4, color: 'var(--text-primary)' }}>{info.label}</p>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{info.desc}</p>
-              </Link>
-            )
-          })}
-        </div>
-      </div>
-
       {/* Quick actions */}
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Швидкі дії</h3>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {[
-            { label: '➕ Новий гість', href: '/dashboard/guests' },
-            { label: '📅 Бронювання', href: '/dashboard/hotel' },
-            { label: '💬 Inbox', href: '/dashboard/inbox' },
-            { label: '⚙️ Налаштування', href: '/dashboard/settings' },
-          ].map(a => (
-            <Link key={a.label} href={a.href} style={{
-              padding: '10px 20px', background: 'var(--bg-secondary)',
-              border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-secondary)', fontSize: 14, transition: 'all 0.15s',
+      <div style={{ marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: 16, fontWeight: 600, color: '#111', marginBottom: '1rem' }}>Швидкі дії</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {quickActions.map((a, i) => (
+            <a key={i} href={a.href} style={{
+              background: '#fff', border: '1px solid #ebebeb', borderRadius: 12,
+              padding: '1rem', display: 'flex', alignItems: 'center', gap: 10,
+              textDecoration: 'none', color: '#111', fontSize: 13, fontWeight: 500,
+              transition: 'border-color 0.15s, box-shadow 0.15s',
             }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-purple)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)' }}>
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = a.color; (e.currentTarget as HTMLElement).style.boxShadow = `0 2px 8px ${a.color}20` }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#ebebeb'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
+            >
+              <span style={{ fontSize: 22 }}>{a.icon}</span>
               {a.label}
-            </Link>
+            </a>
           ))}
         </div>
       </div>
+
+      {/* Recent bookings */}
+      <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>Останні бронювання</h2>
+          <a href="/dashboard/bookings" style={{ fontSize: 13, color: '#534AB7', textDecoration: 'none' }}>Всі →</a>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#fafafa' }}>
+              {['ID', 'Гість', 'Послуга', 'Дата', 'Статус', 'Сума'].map(h => (
+                <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 12, color: '#aaa', fontWeight: 500, borderBottom: '1px solid #f0f0f0' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {recentBookings.map((b, i) => (
+              <tr key={b.id} style={{ borderBottom: i < recentBookings.length - 1 ? '1px solid #f5f5f5' : 'none' }}>
+                <td style={{ padding: '12px 16px', fontSize: 12, color: '#aaa', fontFamily: 'monospace' }}>{b.id}</td>
+                <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500 }}>{b.guest}</td>
+                <td style={{ padding: '12px 16px', fontSize: 13, color: '#666' }}>{b.service}</td>
+                <td style={{ padding: '12px 16px', fontSize: 13, color: '#888' }}>{b.date}</td>
+                <td style={{ padding: '12px 16px' }}>
+                  <span style={{ background: statusColors[b.status].bg, color: statusColors[b.status].color, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
+                    {statusColors[b.status].label}
+                  </span>
+                </td>
+                <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: '#111' }}>
+                  {b.amount > 0 ? `₴${b.amount.toLocaleString()}` : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
     </div>
   )
 }
